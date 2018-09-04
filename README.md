@@ -38,11 +38,3 @@ Main release artifact is a Docker image, so
 # Licens
 
 AGPLv3
-
-
-# TODOs
- -  parse CLI flags
- - Docker
- - k8s
- - travis
- - release \w docker-push
