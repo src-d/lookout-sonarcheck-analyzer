@@ -3,13 +3,30 @@ python: 3.6
 
 sudo: false
 
-install:
-  - ./_tools/install-lookout-latest.sh
-  - pip3 install -r requirements.txt
-script:
-  - (python3 sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
-  - ../lookout-sdk review --log-level=debug "ipv4://localhost:2022"
+stages:
+  - name: test
+  - name: release
+    if: tag IS present
 
-after_failure:
-  - cat ../analyzer.log
-  - cat ../lookout-install.log
+
+jobs:
+  include:
+    - name: 'Unit tests'
+      script:
+        - echo "TODO"
+
+    - name: 'Integration test: analyzer server'
+      install:
+        - pip3 install -r requirements.txt
+      script:
+        - ./_tools/install-lookout-latest.sh
+        - (python3 sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
+        - ../lookout-sdk review --log-level=debug "ipv4://localhost:2022"
+      after_failure:
+        - cat ../analyzer.log
+        - cat ../lookout-install.log
+
+    - name: 'Push image to Docker Hub'
+      stage: release
+      script:
+        - DOCKER_PUSH_LATEST=true make docker-push
