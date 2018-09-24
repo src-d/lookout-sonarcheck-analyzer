@@ -4,6 +4,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
+import os
 import time
 import grpc
 import collections
@@ -18,10 +19,13 @@ from bblfsh_sonar_checks import (
 
 from bblfsh import filter as filter_uast
 
-#TODO(bzz): CLI args
-port_to_listen = 2022
-data_srv_addr = "localhost:10301"
+host_to_bind = os.getenv('SONARCHECK_HOST', "0.0.0.0")
+port_to_listen = os.getenv('SONARCHECK_PORT', 2022)
+data_srv_addr = os.getenv('SONARCHECK_DATA_SERVICE_URL', "localhost:10301")
+log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info")
+
 version = "alpha"
+#TODO(bzz): add CLI arg
 grpc_max_msg_size = 100 * 1024 * 1024 #100mb
 
 class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
@@ -68,7 +72,7 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
 def serve():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
     service_analyzer_pb2_grpc.add_AnalyzerServicer_to_server(Analyzer(), server)
-    server.add_insecure_port("0.0.0.0:{}".format(port_to_listen))
+    server.add_insecure_port("{}:{}".format(host_to_bind, port_to_listen))
     server.start()
 
     one_day_sec = 60*60*24
