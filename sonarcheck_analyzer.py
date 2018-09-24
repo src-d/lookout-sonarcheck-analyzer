@@ -6,14 +6,19 @@ from concurrent.futures import ThreadPoolExecutor
 
 import time
 import grpc
+import collections
 
 from lookout.sdk import service_analyzer_pb2_grpc
 from lookout.sdk import service_analyzer_pb2
 from lookout.sdk import service_data_pb2_grpc
 from lookout.sdk import service_data_pb2
+from bblfsh_sonar_checks import (
+        run_checks, list_checks, list_langs
+)
 
 from bblfsh import filter as filter_uast
 
+#TODO(bzz): CLI args
 port_to_listen = 2022
 data_srv_addr = "localhost:10301"
 version = "alpha"
@@ -40,13 +45,21 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
         comments = []
         for change in changes:
             print("analyzing '{}' in {}".format(change.head.path, change.head.language))
-            #TODO
-            #r = sonar.check(change.head.uast)
-            comments.append(
-                service_analyzer_pb2.Comment(
-                    file=change.head.path,
-                    line=0, #TODO r.pos -> line number
-                    text=""))
+            check_results = run_checks(
+                list_checks(change.head.language.lower()),
+                change.head.language.lower(),
+                change.head.uast
+            )
+            n = 0
+            for check in check_results:
+                for res in check_results[check]:
+                    comments.append(
+                        service_analyzer_pb2.Comment(
+                            file=change.head.path,
+                            line=res["pos"]["line"] if res and "pos" in res and res["pos"] and "line" in res["pos"] else 0,
+                            text="{}: {}".format(check, res["msg"])))
+                    n += 1
+        print("{} comments produced".format(n))
         return service_analyzer_pb2.EventResponse(analyzer_version=version, comments=comments)
 
     def NotifyPushEvent(self, request, context):
@@ -65,8 +78,24 @@ def serve():
     except KeyboardInterrupt:
         server.stop(0)
 
+
+def print_check_stats():
+    num_checks = 0
+    all_checks = collections.defaultdict(list)
+    langs = list_langs()
+    for lang in langs:
+        checks = list_checks(lang)
+        all_checks[lang].append(checks)
+        num_checks += len(checks)
+    print("{} langs, {} checks supported".format(len(langs), num_checks))
+
+    # TODO(bzz): debug log level
+    print("Langs: ", langs)
+    print("Checks: ", checks)
+
 def main():
     print("starting gRPC Analyzer server at port {}".format(port_to_listen))
+    print_check_stats()
     serve()
 
 if __name__ == "__main__":
