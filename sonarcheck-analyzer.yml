@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lookout-sonarcheck-analyzer
+  labels:
+    app: sonarcheck-analyzer
+    release: lookout
+spec:
+  type: ClusterIP
+  ports:
+    - port: 10304
+      targetPort: 10304
+      protocol: TCP
+  selector:
+    app: sonarcheck-analyzer
+    release: lookout
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: lookout-sonarcheck-analyzer
+  labels:
+    app: sonarcheck-analyzer
+    release: lookout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarcheck-analyzer
+      release: lookout
+  template:
+    metadata:
+      labels:
+        app: sonarcheck-analyzer
+        release: lookout
+    spec:
+      containers:
+        - name: sonarcheck-analyzer
+          image: "srcd/lookout-sonarcheck-analyzer:v0.0.3"
+          imagePullPolicy: Always
+          env:
+            - name: SONARCHECK_DATA_SERVICE_URL
+              value: "ipv4://lookout:10301"
+            - name: SONARCHECK_PORT
+              value: "10304"
+            - name: SONARCHECK_LOG_LEVEL
+              value: "debug"
+          ports:
+            - containerPort: 10304
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 10304
+          readinessProbe:
+            tcpSocket:
+              port: 10304
+      nodeSelector:
+        srcd.host/type: worker
