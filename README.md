@@ -1,8 +1,8 @@
 # [![Build Status](https://travis-ci.org/src-d/lookout-sonarcheck-analyzer.svg)](https://travis-ci.org/src-d/lookout-sonarcheck-analyzer) lookout analyzer: sonarcheck
 
-A [lookout](https://github.com/src-d/lookout/) analyzer implementation that uses bblfsh UAST and a [sonar-checks](https://github.com/bblfsh/sonar-checks).
+A [lookout](https://github.com/src-d/lookout/) analyzer implementation that uses bblfsh UAST and [sonar-checks](https://github.com/bblfsh/sonar-checks).
 
-_Disclamer: this is not official product, but only serves the purpose of testing the lookout._
+_Disclamer: this is not an official product, it only serves the purpose of testing lookout._
 
 
 # Example of utilization
@@ -35,6 +35,6 @@ Main release artifact is a Docker image, so
   - `make docker-push`
 
 
-# Licens
+# License
 
 AGPLv3
