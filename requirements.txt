@@ -1,5 +1,5 @@
 bblfsh==2.11.2
-bblfsh-sonar-checks==0.3.0
+bblfsh-sonar-checks==0.4.0
 certifi==2018.8.24
 chardet==3.0.4
 docker==3.5.0
