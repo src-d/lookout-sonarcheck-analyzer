@@ -14,8 +14,9 @@ from lookout.sdk import service_analyzer_pb2
 from lookout.sdk import service_data_pb2_grpc
 from lookout.sdk import service_data_pb2
 from bblfsh_sonar_checks import (
-        run_checks, list_checks, list_langs
+        run_checks, list_checks
 )
+from bblfsh_sonar_checks.utils import list_langs
 
 from bblfsh import filter as filter_uast
 
