@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
         - name: sonarcheck-analyzer
-          image: "srcd/lookout-sonarcheck-analyzer:v0.0.3"
+          image: "srcd/lookout-sonarcheck-analyzer:v0.0.1"
           imagePullPolicy: Always
           env:
             - name: SONARCHECK_DATA_SERVICE_URL
