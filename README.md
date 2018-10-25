@@ -2,7 +2,7 @@
 
 A [lookout](https://github.com/src-d/lookout/) analyzer implementation that uses bblfsh UAST and [sonar-checks](https://github.com/bblfsh/sonar-checks).
 
-_Disclamer: this is not an official product, it only serves the purpose of testing lookout._
+_Disclaimer: this is not an official product, it only serves the purpose of testing lookout._
 
 
 # Example of utilization
@@ -37,4 +37,4 @@ Main release artifact is a Docker image, so
 
 # License
 
-AGPLv3
+[AGPLv3](./LICENSE)
