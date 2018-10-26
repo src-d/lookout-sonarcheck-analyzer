@@ -30,3 +30,7 @@ jobs:
       stage: release
       script:
         - DOCKER_PUSH_LATEST=true make docker-push
+    - name: 'Deploy to staging'
+      stage: release
+      script:
+        - HELM_RELEASE=lookout-sonarcheck-analyzer HELM_CHART=src-d/lookout-sonarcheck-analyzer K8S_NAMESPACE=lookout HELM_ARGS="--tiller-namespace=lookout --set image.tag=$TRAVIS_TAG -f .helm_staging.yml" make deploy
