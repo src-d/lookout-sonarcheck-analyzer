@@ -22,7 +22,7 @@ $ lookout-sdk review -v ipv4://localhost:2001 \
 
 | Variable | Default | Description |
 | -- | -- | -- |
-| `SONARCHECK_HOST` | `0.0.0.0` | IP address to bind the gRCP serve |
+| `SONARCHECK_HOST` | `0.0.0.0` | IP address to bind the gRPC serve |
 | `SONARCHECK_PORT` | `2002` | Port to bind the gRPC server |
 | `SONARCHECK_DATA_SERVICE_URL` | `ipv4://localhost:10301` | gRPC URL of the [Data service](https://github.com/src-d/lookout/tree/master/docs#components)
 | `SONARCHECK_LOG_LEVEL` | `info` | Logging level (info, debug, warning or error) |
