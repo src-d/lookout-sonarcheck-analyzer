@@ -7,6 +7,8 @@ stages:
   - name: test
   - name: release
     if: tag IS present
+  - name: deploy
+    if: tag IS present
 
 
 jobs:
@@ -30,3 +32,9 @@ jobs:
       stage: release
       script:
         - DOCKER_PUSH_LATEST=true make docker-push
+    - name: 'Deploy to staging'
+      stage: deploy
+      install:
+        - make install-helm
+      script:
+        - HELM_RELEASE=lookout-gosonarcheck-analyzer HELM_CHART=lookout-gosonarcheck-analyzer K8S_NAMESPACE=lookout HELM_ARGS="--tiller-namespace=lookout --repo https://src-d.github.io/charts/ --set image.tag=$TRAVIS_TAG -f .helm_staging.yml" make deploy
