@@ -1,5 +1,5 @@
 app:
-  dataServiceUrl: ipv4://lookout-work:10301
+  dataServiceUrl: lookout-work:10301
 
 nodeSelector:
   srcd.host/app: lookout
