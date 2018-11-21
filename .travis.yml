@@ -10,23 +10,15 @@ stages:
   - name: deploy
     if: tag IS present
 
-
 jobs:
   include:
-    - name: 'Unit tests'
-      script:
-        - echo "TODO"
-
     - name: 'Integration test: analyzer server'
       install:
         - pip3 install -r requirements.txt
       script:
-        - ./_tools/install-lookout-latest.sh
-        - (python3 sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
-        - ../lookout-sdk review --log-level=debug "ipv4://localhost:2022"
-      after_failure:
-        - cat ../analyzer.log
-        - cat ../lookout-install.log
+        - curl https://raw.githubusercontent.com/src-d/lookout-sdk/master/_tools/install-lookout-latest.sh | bash
+        - (python3 -u sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
+        - ./lookout-sdk review --log-level=debug "ipv4://localhost:2022"
 
     - name: 'Push image to Docker Hub'
       stage: release
