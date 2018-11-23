@@ -14,7 +14,7 @@ from lookout.sdk import service_analyzer_pb2
 from lookout.sdk import service_data_pb2_grpc
 from lookout.sdk import service_data_pb2
 from bblfsh_sonar_checks import (
-        run_checks, list_checks
+    run_checks, list_checks
 )
 from bblfsh_sonar_checks.utils import list_langs
 
@@ -26,8 +26,9 @@ data_srv_addr = os.getenv('SONARCHECK_DATA_SERVICE_URL', "localhost:10301")
 log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info")
 
 version = "alpha"
-#TODO(bzz): add CLI arg
-grpc_max_msg_size = 100 * 1024 * 1024 #100mb
+# TODO(bzz): add CLI arg
+grpc_max_msg_size = 100 * 1024 * 1024  # 100mb
+
 
 class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
@@ -35,9 +36,9 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
 
         # client connection to DataServe
         channel = grpc.insecure_channel(data_srv_addr, options=[
-                ("grpc.max_send_message_length", grpc_max_msg_size),
-                ("grpc.max_receive_message_length", grpc_max_msg_size),
-            ])
+            ("grpc.max_send_message_length", grpc_max_msg_size),
+            ("grpc.max_receive_message_length", grpc_max_msg_size),
+        ])
         stub = service_data_pb2_grpc.DataStub(channel)
         changes = stub.GetChanges(
             service_data_pb2.ChangesRequest(
@@ -49,7 +50,8 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
 
         comments = []
         for change in changes:
-            print("analyzing '{}' in {}".format(change.head.path, change.head.language))
+            print("analyzing '{}' in {}".format(
+                change.head.path, change.head.language))
             check_results = run_checks(
                 list_checks(change.head.language.lower()),
                 change.head.language.lower(),
@@ -70,9 +72,11 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
     def NotifyPushEvent(self, request, context):
         pass
 
+
 def serve():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
-    service_analyzer_pb2_grpc.add_AnalyzerServicer_to_server(Analyzer(), server)
+    service_analyzer_pb2_grpc.add_AnalyzerServicer_to_server(
+        Analyzer(), server)
     server.add_insecure_port("{}:{}".format(host_to_bind, port_to_listen))
     server.start()
 
@@ -98,10 +102,12 @@ def print_check_stats():
     print("Langs: ", langs)
     print("Checks: ", checks)
 
+
 def main():
     print("starting gRPC Analyzer server at port {}".format(port_to_listen))
     print_check_stats()
     serve()
+
 
 if __name__ == "__main__":
     main()
