@@ -50,6 +50,9 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
 
         comments = []
         for change in changes:
+            if not change.HasField("head"):
+                continue
+
             print("analyzing '{}' in {}".format(
                 change.head.path, change.head.language))
             check_results = run_checks(
