@@ -8,6 +8,7 @@ import os
 import time
 import grpc
 import collections
+import logging
 
 from lookout.sdk import service_analyzer_pb2_grpc
 from lookout.sdk import service_analyzer_pb2
@@ -23,16 +24,21 @@ from bblfsh import filter as filter_uast
 host_to_bind = os.getenv('SONARCHECK_HOST', "0.0.0.0")
 port_to_listen = os.getenv('SONARCHECK_PORT', 2022)
 data_srv_addr = os.getenv('SONARCHECK_DATA_SERVICE_URL', "localhost:10301")
-log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info")
+log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info").upper()
 
 version = "alpha"
 # TODO(bzz): add CLI arg
 grpc_max_msg_size = 100 * 1024 * 1024  # 100mb
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+logger.addHandler(handler)
+logger.setLevel(log_level)
+
 
 class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
-        print("got review request {}".format(request))
+        logger.debug("got review request %s", request)
 
         # client connection to DataServe
         channel = grpc.insecure_channel(data_srv_addr, options=[
@@ -53,8 +59,8 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
             if not change.HasField("head"):
                 continue
 
-            print("analyzing '{}' in {}".format(
-                change.head.path, change.head.language))
+            logger.debug("analyzing '%s' in %s",
+                         change.head.path, change.head.language)
             check_results = run_checks(
                 list_checks(change.head.language.lower()),
                 change.head.language.lower(),
@@ -69,7 +75,7 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
                             line=res["pos"]["line"] if res and "pos" in res and res["pos"] and "line" in res["pos"] else 0,
                             text="{}: {}".format(check, res["msg"])))
                     n += 1
-        print("{} comments produced".format(n))
+        logger.info("%d comments produced", n)
         return service_analyzer_pb2.EventResponse(analyzer_version=version, comments=comments)
 
     def NotifyPushEvent(self, request, context):
@@ -99,15 +105,14 @@ def print_check_stats():
         checks = list_checks(lang)
         all_checks[lang].append(checks)
         num_checks += len(checks)
-    print("{} langs, {} checks supported".format(len(langs), num_checks))
+    logger.info("%d langs, %d checks supported", len(langs), num_checks)
 
-    # TODO(bzz): debug log level
-    print("Langs: ", langs)
-    print("Checks: ", checks)
+    logger.debug("Langs: %s", langs)
+    logger.debug("Checks: %s", checks)
 
 
 def main():
-    print("starting gRPC Analyzer server at port {}".format(port_to_listen))
+    logger.info("starting gRPC Analyzer server at port %d", port_to_listen)
     print_check_stats()
     serve()
 
