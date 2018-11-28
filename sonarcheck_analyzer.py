@@ -54,11 +54,15 @@ class Analyzer(AnalyzerServicer):
 
             logger.debug("analyzing '%s' in %s",
                          change.head.path, change.head.language)
-            check_results = run_checks(
-                list_checks(change.head.language.lower()),
-                change.head.language.lower(),
-                change.head.uast
-            )
+            try:
+                check_results = run_checks(
+                    list_checks(change.head.language.lower()),
+                    change.head.language.lower(),
+                    change.head.uast
+                )
+            except Exception as e:
+                logger.exception("Error during analyzing file '%s' in commit '%s': %s",
+                                 change.head.path, request.commit_revision.head.hash, e)
             n = 0
             for check in check_results:
                 for res in check_results[check]:
