@@ -10,25 +10,21 @@ import grpc
 import collections
 import logging
 
-from lookout.sdk import service_analyzer_pb2_grpc
+from lookout.sdk import AnalyzerServicer, add_analyzer_to_server
 from lookout.sdk import service_analyzer_pb2
 from lookout.sdk import service_data_pb2_grpc
 from lookout.sdk import service_data_pb2
-from bblfsh_sonar_checks import (
-    run_checks, list_checks
-)
+from lookout.sdk.grpc import to_grpc_address, create_channel
+from bblfsh_sonar_checks import run_checks, list_checks
 from bblfsh_sonar_checks.utils import list_langs
-
 from bblfsh import filter as filter_uast
 
+version = "alpha"
 host_to_bind = os.getenv('SONARCHECK_HOST', "0.0.0.0")
 port_to_listen = os.getenv('SONARCHECK_PORT', 2022)
-data_srv_addr = os.getenv('SONARCHECK_DATA_SERVICE_URL', "localhost:10301")
+data_srv_addr = to_grpc_address(
+    os.getenv('SONARCHECK_DATA_SERVICE_URL', "ipv4://localhost:10301"))
 log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info").upper()
-
-version = "alpha"
-# TODO(bzz): add CLI arg
-grpc_max_msg_size = 100 * 1024 * 1024  # 100mb
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -36,15 +32,12 @@ logger.addHandler(handler)
 logger.setLevel(log_level)
 
 
-class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
+class Analyzer(AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
         logger.debug("got review request %s", request)
 
         # client connection to DataServe
-        channel = grpc.insecure_channel(data_srv_addr, options=[
-            ("grpc.max_send_message_length", grpc_max_msg_size),
-            ("grpc.max_receive_message_length", grpc_max_msg_size),
-        ])
+        channel = create_channel(data_srv_addr)
         stub = service_data_pb2_grpc.DataStub(channel)
         changes = stub.GetChanges(
             service_data_pb2.ChangesRequest(
@@ -84,8 +77,7 @@ class Analyzer(service_analyzer_pb2_grpc.AnalyzerServicer):
 
 def serve():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
-    service_analyzer_pb2_grpc.add_AnalyzerServicer_to_server(
-        Analyzer(), server)
+    add_analyzer_to_server(Analyzer(), server)
     server.add_insecure_port("{}:{}".format(host_to_bind, port_to_listen))
     server.start()
 

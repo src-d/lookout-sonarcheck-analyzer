@@ -7,7 +7,7 @@ docker-pycreds==0.3.0
 grpcio==1.13.0
 grpcio-tools==1.13.0
 idna==2.7
-lookout-sdk==0.0.4
+lookout-sdk==0.2.0
 protobuf==3.6.1
 requests==2.19.1
 six==1.11.0
