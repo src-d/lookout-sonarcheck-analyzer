@@ -108,7 +108,7 @@ def print_check_stats():
 
 
 def main():
-    logger.info("starting gRPC Analyzer server at port %d", port_to_listen)
+    logger.info("starting gRPC Analyzer server at port %s", port_to_listen)
     print_check_stats()
     serve()
 
