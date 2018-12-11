@@ -21,7 +21,7 @@ jobs:
         - curl https://raw.githubusercontent.com/src-d/lookout-sdk/master/_tools/install-lookout-latest.sh | bash
         - (python3 -u sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
         - sleep 5s
-        - ./lookout-sdk review --log-level=debug "ipv4://localhost:2022"
+        - ./lookout-sdk review --log-level=debug
 
     - name: 'Push image to Docker Hub'
       stage: release
