@@ -36,47 +36,50 @@ class Analyzer(AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
         logger.debug("got review request %s", request)
 
-        # client connection to DataServe
-        channel = create_channel(data_srv_addr)
-        stub = service_data_pb2_grpc.DataStub(channel)
-        changes = stub.GetChanges(
-            service_data_pb2.ChangesRequest(
-                head=request.commit_revision.head,
-                base=request.commit_revision.base,
-                want_contents=False,
-                want_uast=True,
-                exclude_vendored=True))
-
         comments = []
-        for change in changes:
-            if not change.HasField("head"):
-                continue
 
-            logger.debug("analyzing '%s' in %s",
-                         change.head.path, change.head.language)
-            try:
-                check_results = run_checks(
-                    list_checks(change.head.language.lower()),
-                    change.head.language.lower(),
-                    change.head.uast
-                )
-            except Exception as e:
-                logger.exception("Error during analyzing file '%s' in commit '%s': %s",
-                                 change.head.path, request.commit_revision.head.hash, e)
-            n = 0
-            for check in check_results:
-                for res in check_results[check]:
-                    comments.append(
-                        service_analyzer_pb2.Comment(
-                            file=change.head.path,
-                            line=res["pos"]["line"] if res and "pos" in res and res["pos"] and "line" in res["pos"] else 0,
-                            text="{}: {}".format(check, res["msg"])))
-                    n += 1
-        logger.info("%d comments produced", n)
+        # client connection to DataServe
+        with create_channel(data_srv_addr) as channel:
+            stub = service_data_pb2_grpc.DataStub(channel)
+            changes = stub.GetChanges(
+                service_data_pb2.ChangesRequest(
+                    head=request.commit_revision.head,
+                    base=request.commit_revision.base,
+                    want_contents=False,
+                    want_uast=True,
+                    exclude_vendored=True))
+
+            for change in changes:
+                if not change.HasField("head"):
+                    continue
+
+                logger.debug("analyzing '%s' in %s",
+                             change.head.path, change.head.language)
+                try:
+                    check_results = run_checks(
+                        list_checks(change.head.language.lower()),
+                        change.head.language.lower(),
+                        change.head.uast
+                    )
+                except Exception as e:
+                    logger.exception("Error during analyzing file '%s' in commit '%s': %s",
+                                     change.head.path, request.commit_revision.head.hash, e)
+                    continue
+
+                for check in check_results:
+                    for res in check_results[check]:
+                        comments.append(
+                            service_analyzer_pb2.Comment(
+                                file=change.head.path,
+                                line=res.get("pos", {}).get("line", 0),
+                                text="{}: {}".format(check, res["msg"])))
+
+        logger.info("%d comments produced", len(comments))
+
         return service_analyzer_pb2.EventResponse(analyzer_version=version, comments=comments)
 
     def NotifyPushEvent(self, request, context):
-        pass
+        return service_analyzer_pb2.EventResponse(analyzer_version=version)
 
 
 def serve():
