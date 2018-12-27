@@ -1,13 +1,13 @@
-bblfsh==2.11.2
+bblfsh==2.12.7
 bblfsh-sonar-checks==0.4.0
 certifi==2018.8.24
 chardet==3.0.4
 docker==3.5.0
 docker-pycreds==0.3.0
-grpcio==1.13.0
-grpcio-tools==1.13.0
+grpcio==1.17.1
+grpcio-tools==1.17.1
 idna==2.7
-lookout-sdk==0.2.0
+lookout-sdk==0.3.0
 protobuf==3.6.1
 requests==2.20.0
 six==1.11.0

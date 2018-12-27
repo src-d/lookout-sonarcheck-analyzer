@@ -10,10 +10,8 @@ import grpc
 import collections
 import logging
 
-from lookout.sdk import AnalyzerServicer, add_analyzer_to_server
-from lookout.sdk import service_analyzer_pb2
-from lookout.sdk import service_data_pb2_grpc
-from lookout.sdk import service_data_pb2
+from lookout.sdk.pb import AnalyzerServicer, add_analyzer_to_server, DataStub, \
+    ChangesRequest, Comment, EventResponse
 from lookout.sdk.grpc import to_grpc_address, create_channel
 from bblfsh_sonar_checks import run_checks, list_checks
 from bblfsh_sonar_checks.utils import list_langs
@@ -31,6 +29,8 @@ handler = logging.StreamHandler()
 logger.addHandler(handler)
 logger.setLevel(log_level)
 
+langs = list_langs()
+
 
 class Analyzer(AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
@@ -40,14 +40,15 @@ class Analyzer(AnalyzerServicer):
 
         # client connection to DataServe
         with create_channel(data_srv_addr) as channel:
-            stub = service_data_pb2_grpc.DataStub(channel)
+            stub = DataStub(channel)
             changes = stub.GetChanges(
-                service_data_pb2.ChangesRequest(
+                ChangesRequest(
                     head=request.commit_revision.head,
                     base=request.commit_revision.base,
                     want_contents=False,
                     want_uast=True,
-                    exclude_vendored=True))
+                    exclude_vendored=True,
+                    include_languages=langs))
 
             for change in changes:
                 if not change.HasField("head"):
@@ -69,17 +70,17 @@ class Analyzer(AnalyzerServicer):
                 for check in check_results:
                     for res in check_results[check]:
                         comments.append(
-                            service_analyzer_pb2.Comment(
+                            Comment(
                                 file=change.head.path,
                                 line=res.get("pos", {}).get("line", 0),
                                 text="{}: {}".format(check, res["msg"])))
 
         logger.info("%d comments produced", len(comments))
 
-        return service_analyzer_pb2.EventResponse(analyzer_version=version, comments=comments)
+        return EventResponse(analyzer_version=version, comments=comments)
 
     def NotifyPushEvent(self, request, context):
-        return service_analyzer_pb2.EventResponse(analyzer_version=version)
+        return EventResponse(analyzer_version=version)
 
 
 def serve():
@@ -99,7 +100,6 @@ def serve():
 def print_check_stats():
     num_checks = 0
     all_checks = collections.defaultdict(list)
-    langs = list_langs()
     for lang in langs:
         checks = list_checks(lang)
         all_checks[lang].append(checks)
