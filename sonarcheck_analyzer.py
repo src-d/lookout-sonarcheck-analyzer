@@ -29,6 +29,8 @@ handler = logging.StreamHandler()
 logger.addHandler(handler)
 logger.setLevel(log_level)
 
+langs = list_langs()
+
 
 class Analyzer(AnalyzerServicer):
     def NotifyReviewEvent(self, request, context):
@@ -45,7 +47,8 @@ class Analyzer(AnalyzerServicer):
                     base=request.commit_revision.base,
                     want_contents=False,
                     want_uast=True,
-                    exclude_vendored=True))
+                    exclude_vendored=True,
+                    include_languages=langs))
 
             for change in changes:
                 if not change.HasField("head"):
@@ -97,7 +100,6 @@ def serve():
 def print_check_stats():
     num_checks = 0
     all_checks = collections.defaultdict(list)
-    langs = list_langs()
     for lang in langs:
         checks = list_checks(lang)
         all_checks[lang].append(checks)
