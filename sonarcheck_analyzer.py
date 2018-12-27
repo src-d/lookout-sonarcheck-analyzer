@@ -21,7 +21,7 @@ from bblfsh import filter as filter_uast
 
 version = "alpha"
 host_to_bind = os.getenv('SONARCHECK_HOST', "0.0.0.0")
-port_to_listen = os.getenv('SONARCHECK_PORT', 2022)
+port_to_listen = os.getenv('SONARCHECK_PORT', 9930)
 data_srv_addr = to_grpc_address(
     os.getenv('SONARCHECK_DATA_SERVICE_URL', "ipv4://localhost:10301"))
 log_level = os.getenv('SONARCHECK_LOG_LEVEL', "info").upper()
