@@ -7,10 +7,21 @@ _Disclaimer: this is not an official product, it only serves the purpose of test
 
 # Example of utilization
 
-With `lookout-sdk` binary from the latest release of [SDK](https://github.com/src-d/lookout/releases):
+Install **lookout-sonarcheck** dependencies running:
 
+```shell
+$ pip3 install -r requirements.txt
 ```
-$ python3 lookout-sonarcheck.py
+
+Run **lookout-sonarcheck** analyzer
+
+```shell
+$ python3 sonarcheck_analyzer.py
+```
+
+With `lookout-sdk` binary from the latest release of [SDK](https://github.com/src-d/lookout/releases), run:
+
+```shell
 
 $ lookout-sdk review --log-level=debug \
     --from c99dcdff172f1cb5505603a45d054998cb4dd606 \
