@@ -26,7 +26,7 @@ jobs:
     - name: 'Push image to Docker Hub'
       stage: release
       script:
-        - DOCKER_PUSH_LATEST=true make docker-push
+        - make docker-push-latest-release
 
     - name: 'Deploy to staging'
       stage: deploy
