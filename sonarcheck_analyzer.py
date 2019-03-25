@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Analyzer that wrapps https://github.com/bblfsh/sonar-checks
+# Analyzer that wraps https://github.com/bblfsh/sonar-checks
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -10,9 +10,11 @@ import grpc
 import collections
 import logging
 
-from lookout.sdk.pb import AnalyzerServicer, add_analyzer_to_server, DataStub, \
-    ChangesRequest, Comment, EventResponse
-from lookout.sdk.grpc import to_grpc_address, create_channel
+from lookout.sdk import pb
+from lookout.sdk.service_data import DataStub
+from lookout.sdk.grpc import to_grpc_address, create_channel, create_server, \
+    LogUnaryServerInterceptor, LogStreamServerInterceptor, \
+    LogUnaryClientInterceptor, LogStreamClientInterceptor
 from bblfsh_sonar_checks import run_checks, list_checks
 from bblfsh_sonar_checks.utils import list_langs
 from bblfsh import filter as filter_uast
@@ -32,17 +34,25 @@ logger.setLevel(log_level)
 langs = list_langs()
 
 
-class Analyzer(AnalyzerServicer):
-    def NotifyReviewEvent(self, request, context):
+def log_fn(log_fields, msg):
+    logger.debug("{msg} [{log_fields}]".format(msg=msg, log_fields=log_fields.fields))
+
+
+class Analyzer(pb.AnalyzerServicer):
+    def notify_review_event(self, request, context):
         logger.debug("got review request %s", request)
 
         comments = []
 
         # client connection to DataServe
-        with create_channel(data_srv_addr) as channel:
+        with create_channel(data_srv_addr, interceptors=[
+                LogUnaryClientInterceptor(log_fn),
+                LogStreamClientInterceptor(log_fn),
+        ]) as channel:
             stub = DataStub(channel)
-            changes = stub.GetChanges(
-                ChangesRequest(
+            changes = stub.get_changes(
+                context,
+                pb.ChangesRequest(
                     head=request.commit_revision.head,
                     base=request.commit_revision.base,
                     want_contents=False,
@@ -70,22 +80,25 @@ class Analyzer(AnalyzerServicer):
                 for check in check_results:
                     for res in check_results[check]:
                         comments.append(
-                            Comment(
+                            pb.Comment(
                                 file=change.head.path,
                                 line=res.get("pos", {}).get("line", 0),
                                 text="{}: {}".format(check, res["msg"])))
 
         logger.info("%d comments produced", len(comments))
 
-        return EventResponse(analyzer_version=version, comments=comments)
+        return pb.EventResponse(analyzer_version=version, comments=comments)
 
-    def NotifyPushEvent(self, request, context):
-        return EventResponse(analyzer_version=version)
+    def notify_push_event(self, request, context):
+        return pb.EventResponse(analyzer_version=version)
 
 
 def serve():
-    server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
-    add_analyzer_to_server(Analyzer(), server)
+    server = create_server(10, interceptors=[
+        LogUnaryServerInterceptor(log_fn),
+        LogStreamServerInterceptor(log_fn),
+    ])
+    pb.add_analyzer_to_server(Analyzer(), server)
     server.add_insecure_port("{}:{}".format(host_to_bind, port_to_listen))
     server.start()
 
