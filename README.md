@@ -1,4 +1,4 @@
-# [![Build Status](https://travis-ci.org/src-d/lookout-sonarcheck-analyzer.svg)](https://travis-ci.org/src-d/lookout-sonarcheck-analyzer) lookout analyzer: sonarcheck
+# [![Build Status](https://travis-ci.com/src-d/lookout-sonarcheck-analyzer.svg?branch=master)](https://travis-ci.com/src-d/lookout-sonarcheck-analyzer) lookout analyzer: sonarcheck
 
 A [lookout](https://github.com/src-d/lookout/) analyzer implementation that uses bblfsh UAST and [sonar-checks](https://github.com/bblfsh/sonar-checks).
 
