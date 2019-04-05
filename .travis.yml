@@ -3,6 +3,9 @@ python: 3.6
 
 sudo: required
 
+git:
+  depth: false
+
 stages:
   - name: test
   - name: release
@@ -21,7 +24,14 @@ jobs:
         - curl https://raw.githubusercontent.com/src-d/lookout-sdk/master/_tools/install-lookout-latest.sh | bash
         - (python3 -u sonarcheck_analyzer.py |& tee -a ../analyzer.log)&
         - sleep 5s
-        - ./lookout-sdk review --log-level=debug
+        # check it producer comments for file with error
+        - ./lookout-sdk review --from=37314b6bc0da8ff01253b4264519e9d25e14d989 --to=ef921351a8acc24643e0174cc0490a4e063ccfbc > comments.log 2>&1
+        - 'grep "RSPEC-2176: Class has same name as parent" comments.log'
+        - 'grep "status: success" comments.log'
+        # check it doesn't fail on request without comments
+        - ./lookout-sdk review --from=ef921351a8acc24643e0174cc0490a4e063ccfbc --to=90e77923b7e9d065bb4dcc564cf20ca3cacdec87 > comments.log 2>&1
+        - 'grep "no comments were produced" comments.log'
+        - 'grep "status: success" comments.log'
 
     - name: 'Push image to Docker Hub'
       stage: release
