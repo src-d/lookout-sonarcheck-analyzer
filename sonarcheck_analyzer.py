@@ -35,7 +35,8 @@ langs = list_langs()
 
 
 def log_fn(log_fields, msg):
-    logger.debug("{msg} [{log_fields}]".format(msg=msg, log_fields=log_fields.fields))
+    logger.debug("{msg} [{log_fields}]".format(
+        msg=msg, log_fields=log_fields.fields))
 
 
 class Analyzer(pb.AnalyzerServicer):
@@ -82,7 +83,7 @@ class Analyzer(pb.AnalyzerServicer):
                         comments.append(
                             pb.Comment(
                                 file=change.head.path,
-                                line=res.get("pos", {}).get("line", 0),
+                                line=(res.get("pos", {}) or {}).get("line", 0),
                                 text="{}: {}".format(check, res["msg"])))
 
         logger.info("%d comments produced", len(comments))
