@@ -11,5 +11,5 @@ lookout-sdk==0.6.3
 protobuf==3.6.1
 requests==2.20.0
 six==1.11.0
-urllib3==1.23
+urllib3==1.24.2
 websocket-client==0.52.0
