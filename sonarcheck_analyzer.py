@@ -78,13 +78,18 @@ class Analyzer(pb.AnalyzerServicer):
                                      change.head.path, request.commit_revision.head.hash, e)
                     continue
 
+                logger.debug("check_results %s", check_results)
                 for check in check_results:
                     for res in check_results[check]:
-                        comments.append(
-                            pb.Comment(
-                                file=change.head.path,
-                                line=(res.get("pos", {}) or {}).get("line", 0),
-                                text="{}: {}".format(check, res["msg"])))
+                        try:
+                            comments.append(
+                                pb.Comment(
+                                    file=change.head.path,
+                                    line=(res.get("pos", {}) or {}).get("line", 0),
+                                    text="{}: {}".format(check, res["msg"])))
+                        except Exception as e:
+                            logger.exception("Error occurred while creating a comment: %s", e)
+                            continue
 
         logger.info("%d comments produced", len(comments))
 
